@@ -33,6 +33,36 @@ body{background:#070a14;color:#fff;height:100vh;overflow:hidden}
 <body>
 <div class="header">
   <h1>🚆 INCOFER - ESTACIÓN ATLÁNTICO</h1>
+  <!-- Boton para ir a los Horarios del Tren -->
+<button class="boton-horario" onclick="location.href='horario-costa-rica.html'">
+  🕐 Horario del Tren  Costa Rica
+</button>
+
+<style>
+.boton-horario {
+  background: linear-gradient(135deg, #ff8c00, #ffb347);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(255, 140, 0, 0.35);
+  transition: all 0.3s ease;
+}
+
+.boton-horario:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(255, 140, 0, 0.5);
+  background: linear-gradient(135deg, #ff7500, #ffa500);
+}
+
+.boton-horario:active {
+  transform: scale(0.97);
+}
+</style>
+ <!-- Boton para ir a los Horarios del Tren -->
   <div class="tabs">
     <button class="tab active" id="b-alajuela" onclick="show('alajuela')">ALAJUELA-HEREDIA</button>
     <button class="tab" id="b-cartago" onclick="show('cartago')">CARTAGO</button>
