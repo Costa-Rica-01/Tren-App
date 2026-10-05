@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INCOFER - Atlántico | Heredia Alajuela Cartago</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:#070a14;color:#fff;height:100vh;overflow:hidden}
+.header{background:linear-gradient(135deg,#7b2cbf,#00d4ff);padding:12px 16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px}
+.header h1{font-size:13px;letter-spacing:1px}
+.tabs{display:flex;gap:8px}
+.tab{padding:8px 14px;border-radius:20px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.3);color:#fff;font-size:10px;font-weight:900;cursor:pointer;transition:.2s}
+.tab.active{background:#fff;color:#7b2cbf;box-shadow:0 0 12px rgba(255,255,255,.6)}
+.main{display:flex;height:calc(100vh - 52px)}
+.sidebar{width:370px;background:#0f1328;padding:12px;overflow-y:auto;border-right:1px solid #1e254a}
+.route-title{font-size:11px;color:#00e5ff;font-weight:900;letter-spacing:1px;margin-bottom:10px}
+.stop{background:#191f3d;padding:11px;border-radius:12px;margin-bottom:8px;cursor:pointer;border:1px solid rgba(255,255,255,.06);display:flex;gap:10px;align-items:center;transition:.2s}
+.stop:hover{border-color:#7b2cbf;transform:translateX(4px)}
+.stop.active{background:linear-gradient(135deg,#7b2cbf,#4a8cff);border-color:#b16eff}
+.num{width:28px;height:28px;border-radius:50%;background:#000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;flex-shrink:0}
+.stop.active.num{background:#fff;color:#7b2cbf}
+.stop b{font-size:12px}
+.stop small{display:block;color:#8e95b8;font-size:10px;margin-top:2px}
+.stop.active small{color:#e8ddff}
+#map{flex:1;background:#0a0e1a}
+.badge{background:#00e5ff;color:#000;font-size:8px;padding:2px 6px;border-radius:10px;margin-left:6px;font-weight:900}
+@media(max-width:768px){.main{flex-direction:column}.sidebar{width:100%;height:44vh}#map{height:56vh}.header h1{font-size:11px}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🚆 INCOFER - ESTACIÓN ATLÁNTICO</h1>
+  <div class="tabs">
+    <button class="tab active" id="b-alajuela" onclick="show('alajuela')">ALAJUELA-HEREDIA</button>
+    <button class="tab" id="b-cartago" onclick="show('cartago')">CARTAGO</button>
+    <button class="tab" id="b-paraiso" onclick="show('paraiso')">PARAÍSO</button>
+  </div>
+</div>
+<div class="main">
+  <div class="sidebar" id="list"></div>
+  <div id="map"></div>
+</div>
+<script>
+const DATA={
+alajuela:{name:"RUTA ALAJUELA - HEREDIA - ATLÁNTICO (11 paradas)",c:"#00e5ff",s:[
+{n:"Atlántico",d:"San José 0.00km - Carmen",c:[9.937,-84.069],t:"₡550"},
+{n:"Calle Blancos",d:"Goicoechea 19.22km",c:[9.946,-84.076]},
+{n:"Colima",d:"Tibás 16.94km",c:[9.953,-84.083]},
+{n:"Santa Rosa",d:"Santo Domingo 14.69km",c:[9.971,-84.091]},
+{n:"Miraflores",d:"San Pablo 12.61km",c:[9.982,-84.102]},
+{n:"Heredia",d:"Heredia 11.24km",c:[9.999,-84.116],t:"₡800"},
+{n:"San Francisco",d:"Heredia 9.84km",c:[9.99,-84.135]},
+{n:"San Joaquín",d:"Flores 7.14km",c:[9.986,-84.168]},
+{n:"Río Segundo",d:"Alajuela 3.40km",c:[10.001,-84.188]},
+{n:"Bulevar Aeropuerto",d:"Río Segundo 2.09km",c:[10.008,-84.202]},
+{n:"Alajuela",d:"Alajuela 0.00km",c:[10.016,-84.213]}
+]},
+cartago:{name:"RUTA CARTAGO - ATLÁNTICO (7 paradas)",c:"#ff8c2a",s:[
+{n:"Atlántico",d:"San José 0.00km",c:[9.937,-84.069],t:"₡710"},
+{n:"UCR",d:"San Pedro 1.94km",c:[9.9355,-84.051]},
+{n:"ULatina",d:"San Pedro 2.88km",c:[9.933,-84.047]},
+{n:"CFIA",d:"Curridabat 3.78km",c:[9.926,-84.033]},
+{n:"UACA",d:"Curridabat 5.72km",c:[9.918,-84.021]},
+{n:"Tres Ríos",d:"La Unión 10.21km",c:[9.907,-83.985]},
+{n:"Cartago",d:"Cartago 20.52km",c:[9.864,-83.919]}
+]},
+paraiso:{name:"RUTA PARAÍSO - CARTAGO - ATLÁNTICO (10 paradas)",c:"#b16eff",s:[
+{n:"Atlántico",d:"0.00km",c:[9.937,-84.069]},
+{n:"UCR",d:"1.94km",c:[9.9355,-84.051]},
+{n:"ULatina",d:"2.88km",c:[9.933,-84.047]},
+{n:"CFIA",d:"3.78km",c:[9.926,-84.033]},
+{n:"UACA",d:"5.72km",c:[9.918,-84.021]},
+{n:"Tres Ríos",d:"10.21km",c:[9.907,-83.985]},
+{n:"Cartago",d:"20.52km",c:[9.864,-83.919]},
+{n:"Los Ángeles",d:"21.76km",c:[9.857,-83.913]},
+{n:"Oreamuno",d:"24.26km",c:[9.851,-83.895]},
+{n:"Paraíso",d:"27.06km",c:[9.838,-83.864]}
+]}
+};
+const map=L.map('map').setView([9.95,-84.05],12);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© INCOFER | OSM'}).addTo(map);
+let l1,l2,marks=[],tren,anim;
+function show(k){
+document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+document.getElementById('b-'+k).classList.add('active');
+const R=DATA[k];
+if(l1){map.removeLayer(l1);map.removeLayer(l2);}marks.forEach(m=>map.removeLayer(m));marks=[];
+if(tren)map.removeLayer(tren);if(anim)cancelAnimationFrame(anim);
+const list=document.getElementById('list');
+list.innerHTML=`<div class="route-title">${R.name}</div>`;
+const cs=R.s.map(o=>o.c);
+l1=L.polyline(cs,{color:R.c,weight:12,opacity:.18}).addTo(map);
+l2=L.polyline(cs,{color:R.c,weight:4,dashArray:'12,12',opacity:.95}).addTo(map);
+map.fitBounds(cs,{padding:[35,35]});
+R.s.forEach((s,i)=>{
+const mk=L.marker(s.c,{icon:L.divIcon({className:'',html:`<div style="background:#0f1328;border:2px solid ${R.c};width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:11px;box-shadow:0 0 10px ${R.c}">${i+1}</div>`,iconSize:[28,28],iconAnchor:[14,14]})}).addTo(map);
+mk.bindPopup(`<b>${i+1}. ${s.n}</b><br><small>${s.d}</small><br>${s.t?'<b>'+s.t+'</b>':''}`);
+marks.push(mk);
+const d=document.createElement('div');d.className='stop'+(i==0?' active':'');
+d.innerHTML=`<div class="num">${i+1}</div><div><b>${s.n} ${s.t?`<span class="badge">${s.t}</span>`:''}</b><small>${s.d}</small></div>`;
+d.onclick=()=>{document.querySelectorAll('.stop').forEach((e,j)=>e.classList.toggle('active',j===i));map.flyTo(s.c,15,{duration:1});tren.setLatLng(s.c);mk.openPopup();};
+list.appendChild(d);
+});
+tren=L.marker(cs[0],{icon:L.divIcon({className:'',html:'<div style="font-size:28px;filter:drop-shadow(0 0 8px white)">🚆</div>',iconSize:[30,30],iconAnchor:[15,15]})}).addTo(map);
+let idx=0,tt=0;(function loop(){tt+=0.0035;if(tt>=1){tt=0;idx=(idx+1)%(cs.length-1);}const a=cs[idx],b=cs[idx+1];tren.setLatLng([a[0]+(b[0]-a[0])*tt,a[1]+(b[1]-a[1])*tt]);anim=requestAnimationFrame(loop);})();
+}
+show('alajuela');
+setTimeout(()=>map.invalidateSize(),600);
+</script>
+</body>
+</html>
